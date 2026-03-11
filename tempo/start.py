@@ -313,6 +313,8 @@ def load_args():
                         help="re-encode features every k epochs")
     parser.add_argument("--val_frac",          type=float, default=0.1,
                         help="fraction of Xtr held out for validation")
+    parser.add_argument("--zca",           type=bool, default=True,
+                        help="ZCA whitening Bool")
     parser.add_argument("--zca_reg",           type=float, default=0.1,
                         help="ZCA whitening regularisation")
     parser.add_argument("--output",            type=str,   default=OUTPUT_CSV)
@@ -346,11 +348,12 @@ def main():
     print(f"  train={len(Xtr)}, val={len(Xval)}, test={len(Xte)}", flush=True)
 
     # ── 2. ZCA whitening ─────────────────────────────────────────
-    # print(f"\n[2] ZCA whitening (reg={args.zca_reg}) …", flush=True)
-    # zca  = ZCA().fit(Xtr, reg=args.zca_reg)
-    # Xtr  = zca.transform(Xtr)
-    # Xval = zca.transform(Xval)
-    # Xte  = zca.transform(Xte)
+    if args.zca:
+        print(f"\n[2] ZCA whitening (reg={args.zca_reg}) …", flush=True)
+        zca  = ZCA().fit(Xtr, reg=args.zca_reg)
+        Xtr  = zca.transform(Xtr)
+        Xval = zca.transform(Xval)
+        Xte  = zca.transform(Xte)
 
     # ── 3. Build model ───────────────────────────────────────────
     print(f"\n[3] Building model '{args.model}' ({args.n_filters} filters) …",
