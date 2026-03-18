@@ -7,34 +7,31 @@ from data import DataLoader
 from model import CKN3
 from crammer_singer import CrammerSingerSVMClassifier
 
-# ── Hyperparameters ────────────────────────────────────────────────────────────
+#  Hyperparameters
 DATA_PATH          = './data/'
 BATCH_SIZE         = 256
 VAL_RATIO          = 0.2
 
-# Shared CKN + LinearSVM settings
+# CKN + LinearSVM settings
 ALPHA              = 0.001
 N_SAMPLING_PATCHES = 300000
 MAXITER_BFGS       = 5000
 
-# HOG options (Phase 2b)
+# HOG 
 HOG_CELL_SIZE      = (4, 4)
 HOG_BLOCK_SIZE     = (2, 2)
 HOG_BLOCK_STRIDE   = (1, 1)
 HOG_N_BINS         = 9
 
-# Crammer-Singer options (Phase 2c)
+# Crammer-Singer 
 CS_KERNEL          = 'rbf'
 CS_GAMMA           = 0.1
-CS_ALPHA           = 0.001   # same regularisation convention as LinearSVM
+CS_ALPHA           = 0.001   # same regularisation as LinearSVM
 CS_MAXITER         = 10_000
-# ──────────────────────────────────────────────────────────────────────────────
 
 
 def load_data():
-    print("=" * 55)
     print("Loading data")
-    print("=" * 55)
     Xtr_raw = np.array(pd.read_csv(f'{DATA_PATH}Xtr.csv', header=None, sep=',',
                                     usecols=range(3072), encoding='unicode_escape'))
     Ytr_raw = np.array(pd.read_csv(f'{DATA_PATH}Ytr.csv', sep=',', usecols=[1])).squeeze()
@@ -94,18 +91,14 @@ def save_predictions(preds, path):
 
 
 def main():
-    # ── 1. Data ────────────────────────────────────────────────────────────────
+    # Data 
     X_train, Y_train, X_dev, Y_dev, X_test = load_data()
 
     train_loader = DataLoader(X_train, Y_train, batch_size=BATCH_SIZE, shuffle=True)
     dev_loader   = DataLoader(X_dev,   Y_dev,   batch_size=BATCH_SIZE, shuffle=False)
 
-    # ── 2. Phase 1 — Unsupervised CKN training (shared by all models) ──────────
-    # All three variants use the identical CKN3 feature extractor, so we train
-    # the convolutional layers once and reuse the weights for phases 2b and 2c.
-    print("=" * 55)
+    # Unsupervised CKN training (shared by all models) 
     print("Phase 1 — Unsupervised CKN layer training (shared)")
-    print("=" * 55)
 
     base_model = CKN3(alpha=ALPHA, maxiter=MAXITER_BFGS)
     base_model.unsup_train_ckn(train_loader, N_SAMPLING_PATCHES)
@@ -118,10 +111,9 @@ def main():
 
     results = {}   # label -> (train_acc, dev_acc, test_preds)
 
-    # ── 3. Phase 2a — CKN3 + LinearSVM ────────────────────────────────────────
-    print("\n" + "=" * 55)
+    # CKN3 + LinearSVM 
+    print("\n" + "-" * 55)
     print("Phase 2a — CKN3 + LinearSVM")
-    print("=" * 55)
 
     tic = timer()
     base_model.unsup_train_classifier(train_loader)
@@ -133,10 +125,9 @@ def main():
     save_predictions(preds, 'Y_pred_ckn.csv')
     results['CKN3 + LinearSVM'] = (tr, dv, preds)
 
-    # ── 4. Phase 2b — CKN3 + HOG + LinearSVM ──────────────────────────────────
+    # CKN3 + HOG + LinearSVM
     print("\n" + "=" * 55)
     print("Phase 2b — CKN3 + HOG + LinearSVM  (CKN weights reused)")
-    print("=" * 55)
 
     hog_model = CKN3(
         alpha=ALPHA, maxiter=MAXITER_BFGS,
@@ -162,10 +153,9 @@ def main():
     save_predictions(preds, 'Y_pred_ckn_hog.csv')
     results['CKN3 + HOG + LinearSVM'] = (tr, dv, preds)
 
-    # ── 5. Phase 2c — CKN3 + Crammer-Singer SVM ───────────────────────────────
+    # CKN3 + Crammer-Singer SVM
     print("\n" + "=" * 55)
     print("Phase 2c — CKN3 + Crammer-Singer SVM  (CKN weights reused)")
-    print("=" * 55)
 
     cs_model = CKN3(
         alpha=CS_ALPHA,
@@ -192,10 +182,9 @@ def main():
     save_predictions(preds, 'Y_pred_ckn_cs.csv')
     results['CKN3 + Crammer-Singer'] = (tr, dv, preds)
 
-    # ── 6. Summary & best submission ───────────────────────────────────────────
+    # Summary
     print("\n" + "=" * 55)
     print("Summary")
-    print("=" * 55)
     print(f"  {'Model':<28} {'Train acc':>10} {'Dev acc':>10}")
     print(f"  {'-' * 50}")
 
