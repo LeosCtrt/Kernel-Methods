@@ -1,23 +1,3 @@
-"""
-start.py — Train three CKN3 variants and generate Y_pred.csv
-
-Pipeline
---------
-1. Load & normalise data (train/val split + test set)
-2. Phase 1  — Unsupervised CKN layer training (shared by all models)
-              → weights saved to weights.pkl
-3. Phase 2a — CKN3 + LinearSVM              → Y_pred_ckn.csv
-4. Phase 2b — CKN3 + HOG + LinearSVM        → Y_pred_ckn_hog.csv
-              (CKN weights reused from Phase 1, no retraining)
-5. Phase 2c — CKN3 + Crammer-Singer SVM     → Y_pred_ckn_cs.csv
-              (CKN weights reused from Phase 1, no retraining)
-6. Pick the model with the highest dev accuracy → Y_pred.csv
-
-Usage
------
-    python start.py
-"""
-
 import numpy as np
 import pandas as pd
 import pickle
